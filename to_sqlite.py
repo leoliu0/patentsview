@@ -1,20 +1,18 @@
-import csv
 import sqlite3
 import os
+import re
+import csv
 import zipfile as zip
-from glob import glob
-import numpy as np
 import pandas as pd
-
-file_name = "patent.tsv.zip"
-f_name = "patent.tsv"
+import requests
 
 db = sqlite3.connect('patentsview.db')
+website = requests.get('https://patentsview.org/download/data-download-tables').text.split()
 
-for file_name in glob('*.zip'):
-    f_name = file_name.split('.')[0]
-    zf = zip.ZipFile(file_name)
-    df = pd.read_csv(zf.open(file_name.rsplit('.',1)[0]), delimiter="\t",
-                     quoting = csv.QUOTE_NONNUMERIC,low_memory=False)
-    df.to_sql(f_name,db,index=False,if_exists='replace')
-    print(f'finish processing {f_name}')
+for x in website:
+    if re.search('http.*\.tsv\.zip',x):
+        url = re.findall('http.*\.tsv\.zip',x)[0]
+        fn = url.split('/')[-1].split('.')[0]
+        print(url, fn)
+        df = pd.read_csv(url,delimiter="\t",quoting = csv.QUOTE_NONNUMERIC,low_memory=False)
+        df.to_sql(fn,db,index=False,if_exists='replace')

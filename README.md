@@ -1,17 +1,16 @@
 # patentsview
-patentview scripts to process the data
+Python scripts to process the patentviews data and create a sqlite database
 
 * Prerequisites
-1. standard GNU utilities: wget, zip, grep, lynx
-2. python3.6+ with pandas installed
-3. 32GB+ memory
+1. python3.6+ with pandas installed
+2. 32GB+ memory if you want to calculate patent metrics
 
 * Usage:
-```bash
-./patentview.sh
+```Python
+python to_sqlite.py
 ```
 * If you need to compute some standardard patent metrics, you can run
-```bash
+```Python
 python calculate_patent_stats.py
 ```
 This will calculate some simple metrics based on USPC.
