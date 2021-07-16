@@ -9,6 +9,16 @@ Python scripts to process the patentviews data and create a sqlite database
 ```Python
 python to_sqlite.py
 ```
+```Python
+python to_sqlite.py --small
+```
+To avoid download description files which are large and make the database slow
+
+```Python
+python to_sqlite.py --additional
+```
+To download maintainence fee events for calculating patent life
+
 * If you need to compute some standardard patent metrics, you can run
 ```Python
 python calculate_patent_stats.py
