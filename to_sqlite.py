@@ -1,5 +1,6 @@
 #!/bin/python
 import argparse
+import asyncio
 import csv
 import os
 import re
@@ -7,7 +8,7 @@ import sqlite3
 import sys
 import urllib
 import zipfile as zip
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from loguru import logger
 
 import pandas as pd
@@ -20,13 +21,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--small", action="store_true")
 parser.add_argument("--additional", action="store_true")
 parser.add_argument("-j", type=int)
+parser.add_argument("-k", "--keep", action="store_true")
 args = parser.parse_args()
 jobs = args.j if args.j else None
 
 db = sqlite3.connect("patentsview.db")
 website = requests.get(
-    "https://patentsview.org/download/data-download-tables"
-).text.split()
+    "https://patentsview.org/download/data-download-tables").text.split()
 
 
 def download(url):
@@ -36,40 +37,28 @@ def download(url):
     if args.small:
         if "desc.tsv.zip" in url:
             return
-    try:
-        df = pd.read_csv(
-            url,
-            delimiter="\t",
-            quoting=csv.QUOTE_NONNUMERIC,
-            low_memory=False,
-        )
-    except:
-        logger.warning(f"Read {fn} directly failed! Download the file instead")
-        newfn = fn + ".tsv.zip"
-        urllib.request.urlretrieve(url, newfn)
-        df = pd.read_csv(
-            newfn,
-            delimiter="\t",
-            quoting=csv.QUOTE_NONNUMERIC,
-            low_memory=False,
-        )
-        os.remove(newfn)
-    return df, fn
+    newfn = fn + ".tsv.zip"
+    urllib.request.urlretrieve(url, newfn)
+    return fn
 
 
-with ProcessPoolExecutor(max_workers=jobs) as executor:
-    if not jobs:
-        jobs = "all"
-    logger.info(f"Running jobs using {jobs} cores")
-    dfs = []
+with ThreadPoolExecutor() as executor:
+    downloaded = []
     for url in website:
-        # if re.search("http.*\.tsv\.zip", url):
         if re.search("http.*\.tsv\.zip", url):
-            dfs.append(executor.submit(download, url))
+            downloaded.append(executor.submit(download, url))
 
-    for res in as_completed(dfs):
-        df, fn = res.result()
+    for fn in as_completed(downloaded):
+        fn = fn.result()
+        df = pd.read_csv(
+            fn + '.tsv.zip',
+            delimiter="\t",
+            quoting=csv.QUOTE_NONNUMERIC,
+            low_memory=False,
+        )
         df.to_sql(fn, db, index=False, if_exists="replace")
+        if not args.keep:
+            os.remove(fn + '.tsv.zip')
 
 if args.additional:
     url = "https://bulkdata.uspto.gov/data/patent/maintenancefee/MaintFeeEvents.zip"
