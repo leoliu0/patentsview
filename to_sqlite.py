@@ -56,6 +56,7 @@ with ThreadPoolExecutor() as executor:
             quoting=csv.QUOTE_NONNUMERIC,
             low_memory=False,
         )
+        logger.info(f"putting {fn} into database")
         df.to_sql(fn, db, index=False, if_exists="replace")
         if not args.keep:
             os.remove(fn + '.tsv.zip')
