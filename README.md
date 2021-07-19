@@ -2,7 +2,11 @@
 Python scripts to process the patentviews data and create a sqlite database
 
 * Prerequisites
-1. python3.6+ with pandas installed
+1. python3.6+ with pandas installed. Run
+```Bash
+pip install -r requirements.txt
+```
+to install required packages
 2. 32GB+ memory if you want to calculate patent metrics
 
 * Usage:
